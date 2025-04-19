@@ -1,0 +1,18 @@
+[package]
+name = "front_end"
+version = "0.1.0"
+edition = "2021"
+description = "Template for starting a Yew project using Trunk"
+readme = "README.md"
+repository = "https://github.com/yewstack/yew-trunk-minimal-template"
+license = "MIT OR Apache-2.0"
+keywords = ["yew", "trunk"]
+categories = ["gui", "wasm", "web-programming"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies]
+base64 = "0.22.1"
+yew = { version="0.21", features=["csr"] }
+gloo-net = "0.4"
+web-sys = { version = "0.3", features = ["HtmlCanvasElement", "CanvasRenderingContext2d", "Document", "Window","ImageData"] }
+futures-util = "0.3.31"

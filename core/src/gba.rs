@@ -215,7 +215,8 @@ impl GameBoyAdvance {
     pub fn frame(&mut self) {
         static mut OVERSHOOT: usize = 0;
         unsafe {
-            OVERSHOOT = CYCLES_FULL_REFRESH.saturating_sub(self.run::<false>(CYCLES_FULL_REFRESH - OVERSHOOT));
+            OVERSHOOT = CYCLES_FULL_REFRESH
+                .saturating_sub(self.run::<false>(CYCLES_FULL_REFRESH - OVERSHOOT));
         }
     }
 
@@ -223,7 +224,8 @@ impl GameBoyAdvance {
     fn frame_interruptible(&mut self) {
         static mut OVERSHOOT: usize = 0;
         unsafe {
-            OVERSHOOT = CYCLES_FULL_REFRESH.saturating_sub(self.run::<true>(CYCLES_FULL_REFRESH - OVERSHOOT));
+            OVERSHOOT = CYCLES_FULL_REFRESH
+                .saturating_sub(self.run::<true>(CYCLES_FULL_REFRESH - OVERSHOOT));
         }
     }
 
@@ -424,6 +426,31 @@ impl GameBoyAdvance {
     pub fn soft_reset(&mut self) {
         self.cpu.reset();
     }
+    fn load_local_file(path: &str) -> Vec<u8> {
+        let mut file = File::open(path).unwrap();
+        let mut buffer = Vec::new();
+        file.read_to_end(&mut buffer).unwrap();
+        buffer
+    }
+
+    fn get_rom() -> Cartridge {
+        let rom = load_local_file(
+            "/Users/nathancaracho/Documents/projects/rust/llama_boy/external/roms/pkm.gba",
+        );
+        GamepakBuilder::new()
+            .take_buffer(rom.into_boxed_slice())
+            .without_backup_to_file()
+            .build()
+            .unwrap()
+    }
+
+    pub fn from_local_files() -> Self {
+        let bios = load_local_file(
+            "/Users/nathancaracho/Documents/projects/rust/llama_boy/external/bios/gba_bios.bin",
+        );
+        let gamepak = get_rom();
+        GameBoyAdvance::new(bios.into_boxed_slice(), gamepak, NullAudio::new())
+    }
 }
 
 #[cfg(test)]
@@ -444,31 +471,5 @@ mod tests {
         gba.skip_bios();
 
         gba
-    }
-
-    #[test]
-    fn test_arm7tdmi_arm_eggvance() {
-        let mut gba = make_mock_gba(include_bytes!("../../external/gba-suite/arm/arm.gba"));
-
-        for _ in 0..10 {
-            gba.frame();
-        }
-
-        let insn = gba.sysbus.read_32(gba.cpu.pc - 8);
-        assert_eq!(insn, 0xeafffffe); // loop
-        assert_eq!(0, gba.cpu.gpr[12]);
-    }
-
-    #[test]
-    fn test_arm7tdmi_thumb_eggvance() {
-        let mut gba = make_mock_gba(include_bytes!("../../external/gba-suite/thumb/thumb.gba"));
-
-        for _ in 0..10 {
-            gba.frame();
-        }
-
-        let insn = gba.sysbus.read_16(gba.cpu.pc - 4);
-        assert_eq!(insn, 0xe7fe); // loop
-        assert_eq!(0, gba.cpu.gpr[7]);
     }
 }

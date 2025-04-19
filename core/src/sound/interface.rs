@@ -2,7 +2,7 @@ use rustboyadvance_utils::audio::{AudioRingBuffer, SampleConsumer, SampleProduce
 
 pub type StereoSample<T> = [T; 2];
 
-pub trait AudioInterface {
+pub trait AudioInterface: Send {
     fn get_sample_rate(&self) -> i32 {
         44100
     }
