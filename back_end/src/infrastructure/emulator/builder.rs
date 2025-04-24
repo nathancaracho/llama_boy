@@ -13,7 +13,7 @@ fn load_local_file(path: &str) -> Vec<u8> {
 
 fn get_rom() -> Cartridge {
     let rom = load_local_file(
-        "/Users/nathancaracho/Documents/projects/rust/llama_boy/external/roms/pkm.gba",
+        "/Users/nathancaracho/Documents/projects/rust/llama_boy/external/roms/pkmnv1.gba",
     );
     GamepakBuilder::new()
         .take_buffer(rom.into_boxed_slice())
@@ -23,10 +23,21 @@ fn get_rom() -> Cartridge {
 }
 
 pub fn from_local_builder() -> anyhow::Result<GameBoyAdvance> {
+    let save_state = load_local_file(
+        "/Users/nathancaracho/Documents/projects/rust/llama_boy/external/roms/llamaboy.savestate",
+    );
     let bios = load_local_file(
         "/Users/nathancaracho/Documents/projects/rust/llama_boy/external/bios/gba_bios.bin",
     );
+    let rom = load_local_file(
+        "/Users/nathancaracho/Documents/projects/rust/llama_boy/external/roms/pkmnv1.gba",
+    );
     let gamepak = get_rom();
-    let gba = GameBoyAdvance::new(bios.into_boxed_slice(), gamepak, NullAudio::new());
+    let gba = GameBoyAdvance::from_saved_state(
+        &save_state,
+        bios.into_boxed_slice(),
+        rom.into_boxed_slice(),
+        NullAudio::new(),
+    )?;
     Ok(gba)
 }

@@ -1,56 +1,55 @@
-use base64::decode;
-use futures_util::StreamExt;
+use futures_util::SinkExt;
 use gloo_net::websocket::{futures::WebSocket, Message};
-use web_sys::wasm_bindgen::JsCast;
-use web_sys::wasm_bindgen::{self, Clamped};
-use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, ImageData};
-use yew::platform::spawn_local;
-use yew::prelude::*;
+use wasm_bindgen_futures::spawn_local;
+use web_sys::KeyboardEvent;
+use yew::{platform::time::sleep, prelude::*};
+
+use crate::components::memory::Memory;
+
+use super::gba_screen::GbaScreen;
 
 #[function_component(App)]
 pub fn app() -> Html {
-    let canvas_ref = use_node_ref();
+    let ws = use_mut_ref(|| {
+        WebSocket::open("ws://localhost:8080/command/ws").expect("Failed to connect")
+    });
 
-    {
-        let canvas_ref = canvas_ref.clone();
+    let on_keydown = {
+        let ws = ws.clone();
+        Callback::from(move |e: KeyboardEvent| {
+            let command = match e.key().as_str() {
+                "ArrowUp" => "up",
+                "ArrowDown" => "down",
+                "ArrowLeft" => "left",
+                "ArrowRight" => "right",
+                "Enter" => "start",
+                " " => "select",
+                "a" => "a",
+                "s" => "b",
+                "z" => "l",
+                "x" => "r",
+                _ => return,
+            }
+            .to_string();
 
-        use_effect(move || {
-            spawn_local({
-                let canvas_ref = canvas_ref.clone();
-                async move {
-                    let ws = WebSocket::open("ws://localhost:8080/video/ws")
-                        .expect("failed to connect to WebSocket");
-                    let mut read = ws.split().1;
-
-                    while let Some(Ok(Message::Text(base64_data))) = read.next().await {
-                        if let Ok(decoded) = decode(&base64_data) {
-                            if let Some(canvas) = canvas_ref.cast::<HtmlCanvasElement>() {
-                                if let Ok(Some(context)) = canvas.get_context("2d").map(|ctx| {
-                                    ctx.map(|c| c.dyn_into::<CanvasRenderingContext2d>().unwrap())
-                                }) {
-                                    let width = 240;
-                                    let height = 160;
-                                    let clamped = Clamped(decoded.as_slice());
-                                    let image_data = ImageData::new_with_u8_clamped_array_and_sh(
-                                        clamped, width, height,
-                                    )
-                                    .expect("failed to create ImageData");
-
-                                    context
-                                        .put_image_data(&image_data, 0.0, 0.0)
-                                        .expect("failed to draw frame");
-                                }
-                            }
-                        }
-                    }
-                }
+            let ws = ws.clone();
+            spawn_local(async move {
+                let mut socket = ws.borrow_mut();
+                let _ = socket.send(Message::Text(command)).await;
             });
-
-            || ()
-        });
-    }
+        })
+    };
 
     html! {
-        <canvas ref={canvas_ref} width="240" height="160" style="border: 1px solid black;" />
+        <div
+            tabindex="0"
+            onkeydown={on_keydown}
+
+        >
+            <div class="row">
+                <div class="col s6"><GbaScreen /></div>
+                <div class="col s6"><Memory /></div>
+            </div>
+        </div>
     }
 }

@@ -172,6 +172,22 @@ impl GameBoyAdvance {
         bincode::serialize(&s)
     }
 
+    pub fn get_external_wram(&self) -> &[u8] {
+        &self.sysbus.get_ewram()
+    }
+    pub fn inject_iwram<F>(&mut self, f: F)
+    where
+        F: FnOnce(&mut [u8]),
+    {
+        self.sysbus.inject_iwram(f);
+    }
+    pub fn inject_ewram<F>(&mut self, f: F)
+    where
+        F: FnOnce(&mut [u8]),
+    {
+        self.sysbus.inject_ewram(f);
+    }
+
     pub fn restore_state(&mut self, bytes: &[u8]) -> bincode::Result<()> {
         let decoded: Box<SaveState> = bincode::deserialize_from(bytes)?;
 
@@ -425,31 +441,6 @@ impl GameBoyAdvance {
     /// Reset the emulator
     pub fn soft_reset(&mut self) {
         self.cpu.reset();
-    }
-    fn load_local_file(path: &str) -> Vec<u8> {
-        let mut file = File::open(path).unwrap();
-        let mut buffer = Vec::new();
-        file.read_to_end(&mut buffer).unwrap();
-        buffer
-    }
-
-    fn get_rom() -> Cartridge {
-        let rom = load_local_file(
-            "/Users/nathancaracho/Documents/projects/rust/llama_boy/external/roms/pkm.gba",
-        );
-        GamepakBuilder::new()
-            .take_buffer(rom.into_boxed_slice())
-            .without_backup_to_file()
-            .build()
-            .unwrap()
-    }
-
-    pub fn from_local_files() -> Self {
-        let bios = load_local_file(
-            "/Users/nathancaracho/Documents/projects/rust/llama_boy/external/bios/gba_bios.bin",
-        );
-        let gamepak = get_rom();
-        GameBoyAdvance::new(bios.into_boxed_slice(), gamepak, NullAudio::new())
     }
 }
 

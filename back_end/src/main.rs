@@ -1,4 +1,5 @@
 mod domain;
+mod infrastructure;
 mod io;
 use io::server::start_server;
 use tracing_subscriber::EnvFilter;

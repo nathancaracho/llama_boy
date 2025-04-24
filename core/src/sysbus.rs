@@ -217,7 +217,18 @@ impl SysBus {
     pub fn get_ewram(&self) -> &[u8] {
         &self.ewram
     }
-
+    pub fn inject_ewram<F>(&mut self, f: F)
+    where
+        F: FnOnce(&mut [u8]),
+    {
+        f(&mut self.ewram);
+    }
+    pub fn inject_iwram<F>(&mut self, f: F)
+    where
+        F: FnOnce(&mut [u8]),
+    {
+        f(&mut self.iwram);
+    }
     pub fn get_iwram(&self) -> &[u8] {
         &self.iwram
     }

@@ -1,12 +1,6 @@
 [workspace]
-members = [
-    "core",
-    "front_end",
-    "back_end",
-    "arm7tdmi",
-    "utils",
-
-]
+members = ["front_end", "back_end"]
+exclude = ["core", "arm7tdmi", "utils"]
 default-members = ["front_end"]
 
 [profile.dev]
