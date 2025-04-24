@@ -748,6 +748,7 @@ dependencies = [
  "gloo 0.11.0",
  "gloo-net 0.4.0",
  "material-yew",
+ "serde",
  "serde_json",
  "wasm-bindgen-futures",
  "web-sys",

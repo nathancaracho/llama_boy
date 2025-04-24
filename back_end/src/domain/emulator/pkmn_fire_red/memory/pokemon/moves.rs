@@ -3201,6 +3201,5 @@ pub const MOVES: &[Move] = &[
 ];
 
 pub fn get_move_by_id(id: u16) -> Option<Move> {
-    info!("move id {}", id);
     MOVES.iter().find(|m| m.id == id).cloned()
 }

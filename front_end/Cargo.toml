@@ -22,3 +22,4 @@ gloo = "0.11.0"
 serde_json = "1.0.140"
 csv = "1.3.1"
 back_end = { version = "0.1.0", path = "../back_end" }
+serde = "1.0.219"

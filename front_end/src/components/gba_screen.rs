@@ -53,7 +53,7 @@ pub fn gba_screen() -> Html {
     html! {
         <div>
             <h2>{ "GBA Screen" }</h2>
-            <canvas class="z-depth-3" ref={canvas_ref} width="240" height="160" style="width: 480px;" />
+            <canvas class="z-depth-3 " ref={canvas_ref} width="240" height="160" style="width: 480px; filter: contrast(1.2) brightness(0.9) saturate(1.3); image-rendering: pixelated;" />
         </div>
     }
 }

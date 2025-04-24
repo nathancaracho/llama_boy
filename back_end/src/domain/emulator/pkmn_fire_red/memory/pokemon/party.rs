@@ -1,3 +1,5 @@
+use std::default;
+
 use serde::Serialize;
 
 use crate::domain::emulator::pkmn_fire_red::memory::{
@@ -54,6 +56,7 @@ pub struct MoveSlot {
 
 #[derive(Debug, Serialize)]
 pub struct PartyPokemon {
+    pub personality: u32,
     pub species_id: u16,
     pub species: String,
     pub level: u8,
@@ -73,7 +76,25 @@ pub struct PartyPokemon {
 
     pub moves: [MoveSlot; 4],
     pub pp_bonuses: u8,
+    pub is_battle: bool,
 }
+const G_BATTLER_PARTY_INDEXES: usize = 0x02023BCE; // EWRAM – FireRed
+
+pub fn mark_active_mon(party: &mut [PartyPokemon], buf: &[u8]) {
+    // 1. limpa tudo
+    for p in party.iter_mut() {
+        p.is_battle = false;
+    }
+
+    // 2. lê o slot ativo do jogador  ➜ byte 0
+    let idx_player = read_u8(buf, gba_offset(G_BATTLER_PARTY_INDEXES)) as usize;
+
+    // 3. marca só esse
+    if idx_player < party.len() {
+        party[idx_player].is_battle = true;
+    }
+}
+
 /// Lê um dos quatro slots de ataque (idx 0-3) a partir do sub-bloco *Attacks*.
 fn read_move_slot(buf: &[u8], attacks_base: usize, idx: usize, key: u32) -> MoveSlot {
     assert!(idx < 4, "idx fora do intervalo 0..4");
@@ -111,10 +132,12 @@ pub fn get_party_at(buf: &[u8], base_addr: usize) -> Vec<PartyPokemon> {
     const ENC_START: usize = 0x20;
     const SUB: usize = 12;
 
-    // índice 0 = Growth, 1 = Attacks, 2 = EVs, 3 = Misc
-
     let mut v = Vec::new();
     let base = gba_offset(base_addr);
+
+    let current_species = read_u16(buf, gba_offset(0x0202402C));
+    let current_level = read_u8(buf, gba_offset(0x0202402C + 0x1C));
+    let current_hp = read_u16(buf, gba_offset(0x0202402C + 0x20));
 
     for i in 0..6 {
         let off = base + i * SLOT;
@@ -185,7 +208,10 @@ pub fn get_party_at(buf: &[u8], base_addr: usize) -> Vec<PartyPokemon> {
         let spa = read_u16(buf, off + 0x60);
         let spd = read_u16(buf, off + 0x62);
 
+        let is_battle = species == current_species && level == current_level && hp == current_hp;
+
         v.push(PartyPokemon {
+            personality,
             species_id: species,
             species: species_name(species).to_string(),
             level,
@@ -199,7 +225,7 @@ pub fn get_party_at(buf: &[u8], base_addr: usize) -> Vec<PartyPokemon> {
                 spa: (spa as u8),
                 spd: (spd as u8),
                 spe: (spe as u8),
-            }, // ou calc real
+            },
             item,
             exp,
             friendship,
@@ -210,7 +236,9 @@ pub fn get_party_at(buf: &[u8], base_addr: usize) -> Vec<PartyPokemon> {
             pokerus,
             moves,
             pp_bonuses,
+            is_battle,
         });
     }
+    mark_active_mon(&mut v, buf);
     v
 }

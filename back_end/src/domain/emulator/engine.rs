@@ -40,7 +40,7 @@ pub fn start_emulator_loop(
             }
             frames += 1;
             save_state += 1;
-            thread::sleep(Duration::from_millis(16)); // ~60fps
+            thread::sleep(Duration::from_millis(10)); // ~60fps
         }
     });
     Ok(())
